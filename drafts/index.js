@@ -48,7 +48,10 @@ class Promise {
   // 使用成功处理方式
   _resolve(upstreamFulfilledValue) {
     // 2.3.3.2
-    if (upstreamFulfilledValue instanceof Promise) {
+    if (
+      upstreamFulfilledValue instanceof Promise ||
+      isPromiseLike(upstreamFulfilledValue)
+    ) {
       upstreamFulfilledValue.then(this._resolve, this._reject);
       return this;
     }
@@ -74,6 +77,25 @@ class Promise {
           // 2.3.3.1
           if (outputValue === this) {
             throw new TypeError('error');
+          }
+
+          if (typeof outputValue === 'object' || typeof outputValue === 'function') {
+            try {
+              const then = outputValue.then;
+              // if (typeof then === 'function') {
+                // const resolvePromise = function() {
+                //
+                // };
+                // const rejectPromise = function() {
+                //
+                // };
+                // then.call(outputValue, resolvePromise, rejectPromise);
+                // outputValue = Promise.resolve(outputValue);
+
+              // }
+            } catch (e) {
+              throw e;
+            }
           }
 
           this._status = FULFILLED;
