@@ -1,6 +1,3 @@
-// completed1
-// all pass!
-
 const PENDING = 0;
 const FULFILLED = 1;
 const REJECTED = 2;
@@ -41,7 +38,7 @@ function createRunHandle(self, isRejected) {
         self._reject(e);
       }
       // 2.3
-      self._resolveValue(value);
+      self._resolve(value);
     }
   };
 }
@@ -54,17 +51,16 @@ function createResolveValue(self) {
         throw new TypeError('`promise` and `resolveValue` cannot refer to the same object');
       }
       // 2.3.3
-      // thenable
       if (!isPromiseInstance(value) && (isObject(value) || isFunction(value))) {
         const then = value.then;
         if (isFunction(then)) {
           const resolvePromise = new Promise(then.bind(value));
-          self._resolve(resolvePromise);
+          self._fulfill(resolvePromise);
           return;
         }
       }
       // 2.3.4
-      self._resolve(value);
+      self._fulfill(value);
     } catch (e) {
       self._reject(e);
     }
@@ -117,14 +113,14 @@ class Promise {
     this._nexts = [];
     this._doResolve = createRunHandle(this);
     this._doReject = createRunHandle(this, true);
-    this._resolveValue = createResolveValue(this);
-    this._resolve = createResolvePromise(this);
+    this._resolve = createResolveValue(this);
+    this._fulfill = createResolvePromise(this);
     this._reject = createResolvePromise(this, true);
     this._runNext = createRunNext(this);
 
     if (isFunction(executor)) {
       try {
-        executor(this._resolveValue, this._reject);
+        executor(this._resolve, this._reject);
       } catch (e) {
         this._reject(e);
       }
