@@ -11,9 +11,6 @@ function isObject(value) {
 function isFunction(value) {
   return typeof value === 'function';
 }
-function isPromiseLike(o) {
-  return o && isFunction(o.then);
-}
 function isPromiseInstance(promise) {
   return promise instanceof Promise;
 }
@@ -28,7 +25,6 @@ function defaultOnRejected(e) {
 function createRunHandle(self, isRejected) {
   return (upstreamValue) => {
     if (self._status === PENDING) {
-      // console.log('upstreamValue', upstreamValue);
       const runner = self._executors[isRejected ? 1 : 0];
       let value;
       // 2.3.2
@@ -80,17 +76,13 @@ function createResolvePromise(self, isRejected) {
     if (self._status === PENDING) {
       self._value = resolveValue;
       self._status = isRejected ? REJECTED : FULFILLED;
-      // console.log('resolvePromise', resolveValue, self._nexts);
-      if (!self._pendingValue) {
-        self._runNext(self._nexts);
-      }
+      self._runNext(self._nexts);
     }
   };
 }
 
 function createRunNext(self) {
   return (nextPromises) => {
-    // console.log('runNext', self._value);
     let execFuncName;
     if (self._status === FULFILLED) {
       execFuncName = '_doResolve';
@@ -100,7 +92,6 @@ function createRunNext(self) {
     if (!execFuncName) {
       return;
     }
-    // console.log('xxxx');
     nextPromises.forEach(nextPromise => {
       // 2.2.4
       setTimeout(() => {
@@ -110,16 +101,7 @@ function createRunNext(self) {
   };
 }
 
-function createThenableResolve(self) {
-  return (then, thenThis) => {
-    this._nexts.forEach(promise => {
-      then.call(thenThis, promise._doResolve, promise._doReject)
-    });
-  }
-}
-
 function chainPromise(self, next) {
-  // console.log('chainPromise', self._status);
   if (self._status === PENDING) {
     self._nexts.push(next);
   } else {
@@ -133,14 +115,12 @@ class Promise {
     this._value = undefined;
     this._executors = [];
     this._nexts = [];
-    this._pendingValue = false;
     this._doResolve = createRunHandle(this);
     this._doReject = createRunHandle(this, true);
     this._resolveValue = createResolveValue(this);
     this._resolve = createResolvePromise(this);
     this._reject = createResolvePromise(this, true);
     this._runNext = createRunNext(this);
-    this._thenableResolve = createThenableResolve(this);
 
     if (isFunction(executor)) {
       try {
@@ -173,12 +153,3 @@ Promise.reject = function(e) {
 };
 
 module.exports = Promise;
-
-const test = require('./base-test');
-// test.cacheTest2(Promise)
-// test.syncTest1(Promise);
-// test.passTest1(Promise);
-// test.test2272(Promise);
-// test.test21216(Promise);
-// test.thenable4(Promise);
-test.multiResolve1(Promise);
