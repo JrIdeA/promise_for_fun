@@ -1,4 +1,4 @@
-var Promise = require('../drafts');
+var Promise = require('../lib');
 
 module.exports = {
   resolved: Promise.resolve,
